@@ -1,5 +1,5 @@
 # deepRloopPre
-The R-loop is a three-stranded nucleic acid structure composed of a DNA:RNA hybrid strand and single-stranded DNA. R-loops are widespread in different species and participate in a variety of biological processes. The ssDRIP-seq technology developed in our laboratory can efficiently and strand-specifically detect the whole genome R-loop, and is widely used in multiple species. We used ssDRIP-seq data based on deep learning to develop the prediction tool deepRloopPre, which can predict the locations and profiles of strand-specific R-loops in the whole genome using only sequences, and is better than other R-loop prediction tools.
+The R-loop is a three-stranded nucleic acid structure composed of a DNA:RNA hybrid strand and single-stranded DNA. R-loops are widespread in different species and participate in a variety of biological processes. The ssDRIP-seq technology developed in our laboratory can efficiently and strand-specifically detect the whole genome R-loop, and is widely used in multiple species. We used ssDRIP-seq data based on deep learning to develop the prediction tool deepRloopPre, which can predict the locations and profiles of strand-specific R-loops in the whole genome using only sequences, and is better than other R-loop prediction tools.  
 deepRloopPre contains the following files:
 - `deepRloopPredict.py` (main executable script for predicting R-loop)
 - `deepRloopData.py` (main executable script for getting your own training set)
@@ -62,3 +62,7 @@ prefix is test and the `deepRloopPredict.py` output as follows:
 1. Format training data
 ```
 ```
+## Third-party software
+- bedtools
+- deeptools
+- bedGraphToBigWig
