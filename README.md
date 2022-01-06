@@ -1,5 +1,6 @@
 # deepRloopPre
 The R-loop is a three-stranded nucleic acid structure composed of a DNA:RNA hybrid strand and single-stranded DNA. R-loops are widespread in different species and participate in a variety of biological processes. The ssDRIP-seq technology developed in our laboratory can efficiently and strand-specifically detect the whole genome R-loop, and is widely used in multiple species. We used ssDRIP-seq data based on deep learning to develop the prediction tool deepRloopPre, which can predict the locations and profiles of strand-specific R-loops in the whole genome using only sequences, and is better than other R-loop prediction tools.  
+
 deepRloopPre contains the following files:
 - `deepRloopPredict.py` (main executable script for predicting R-loop)
 - `deepRloopData.py` (main executable script for getting your own training set)
@@ -20,7 +21,7 @@ $ git clone git@github.com:PEHGP/deepRloopPre.git
 $ python setup.py install --user
 ```
 ## Commands
-**prediction of R-loop profiles and R-loop locations**
+**prediction of R-loop profiles and R-loop locations**  
 The trained model is in the model folder.There are three training sets of models that can be selected for prediction.
 ```
 deepRloopPredict.py -h
@@ -54,10 +55,10 @@ Chr4	18585056
 Chr5	26975502
 ```
 prefix is test and the `deepRloopPredict.py` output as follows:
-`test_predict.bw` R-loop profile prediction results of bigWig format
-`test_predict.bdg` R-loop profile prediction results of bedGraph format
-`test_predict.bed` original R-loop location prediction results of bed format
-`test_final_predict.bed` final R-loop location prediction results of bed format. Merging R-loop region with a distance of less than 300bp and then deleting region with a distance of less than 100bp.
+- `test_predict.bw` R-loop profile prediction results of bigWig format
+- `test_predict.bdg` R-loop profile prediction results of bedGraph format
+- `test_predict.bed` original R-loop location prediction results of bed format
+- `test_final_predict.bed` final R-loop location prediction results of bed format. Merging R-loop region with a distance of less than 300bp and then deleting region with a distance of less than 100bp.
 **Training your own data**
 1. Format training data
 ```
