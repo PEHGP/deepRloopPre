@@ -57,7 +57,7 @@ Getting `test_all_predict.bed`
 ```
 $ deepRloopPredict.py --h5 your_model.hdf5 --fasta your_genome.fasta --threshold 0 --prefix test_all
 ```
-4. Evaluation your model
+#### 4. Evaluation your model
 ```
 $ deepRloopEval.py getvalue --truepeak observed_peaks.bed --predpeak test_final_predict.bed --truebw observed_drip.bw --predbw test_predict.bw --prefix test 
 $ deepRloopEval.py plotpr --truepeak observed_peaks.bed --predpeak test_all_predict.bed --prefix test
@@ -95,7 +95,7 @@ Chr3	23459830
 Chr4	18585056
 Chr5	26975502
 ```
-prefix is set to test and the `deepRloopPredict.py` output as follows:
+Prefix is set to test and the `deepRloopPredict.py` output as follows:
 - `test_predict.bw` R-loop profile prediction results of bigWig format
 - `test_predict.bdg` R-loop profile prediction results of bedGraph format
 - `test_predict.bed` original R-loop location prediction results of bed format
@@ -141,7 +141,7 @@ $ macs2 bdgcmp -t test_fwd_treat_pileup.bdg -c test_fwd_control_lambda.bdg -m qp
 ```
 `-g` means genome size and needs to be set to your own.  
 `-f` means format of tag file and needs to be set to your own. If it is BAM for paired-end reads, **BAMPE** is used.  
-prefix is set to test and the `deepRloopData.py` output as follows:
+Prefix is set to test and the `deepRloopData.py` output as follows:
 - `test.npz`
 ### 2. Training your model
 ```
