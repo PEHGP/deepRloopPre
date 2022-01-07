@@ -162,7 +162,7 @@ Optional arguments:
 ```
 The input `dataset.npz` can be obtained from `deepRloopData.py`  
 The output is a series of files in hdf5 format, among which the newly generated hdf5 file is the final trained model.  
-### 3. Evaluation model
+### 3. Evaluation your model
 ```
 $ deepRloopEval.py -h
 usage: deepRloopEval.py [-h] [--version]  ...
