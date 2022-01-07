@@ -10,6 +10,8 @@ deepRloopPre contains the following files:
 - `deepRloopData.py` (main executable script for getting your own training set)
 - `deepRloopTrain.py` (main executable script for training your own model)
 - `deepRloopEval.py` (main executable script for evaluating models)
+
+In addition, we also provide a online [tool](http://bioinfor.kib.ac.cn/R-loopAtlas/deepRloopPre/), but only one sequence of 128kb can be predicted at a time.
 ## Installation
 Create a new environment:
 ```
