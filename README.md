@@ -1,4 +1,4 @@
-!(https://github.com/PEHGP/deepRloopPre/blob/main/logo.png)
+!(https://github.com/PEHGP/deepRloopPre/blob/main/logo.png?raw=true)
 ----
 # deepRloopPre
 The R-loop is a three-stranded nucleic acid structure composed of a DNA:RNA hybrid strand and single-stranded DNA. R-loops are widespread in different species and participate in a variety of biological processes. The ssDRIP-seq technology developed in our laboratory can efficiently and strand-specifically detect the whole genome R-loop, and is widely used in multiple species. We used ssDRIP-seq data based on deep learning to develop the prediction tool deepRloopPre, which can predict the locations and profiles of strand-specific R-loops in the whole genome using only sequences, and is better than other R-loop prediction tools.  
@@ -159,7 +159,7 @@ Optional arguments:
   --version        show program's version number and exit
 ```
 The input `dataset.npz` can be obtained from `deepRloopData.py`  
-The output is a series of files in hdf5 format, among which the newly generated hdf5 file is the final trained model.
+The output is a series of files in hdf5 format, among which the newly generated hdf5 file is the final trained model.  
 3. Evaluation model
 ```
 $ deepRloopEval.py -h
