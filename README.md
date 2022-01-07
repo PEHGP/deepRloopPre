@@ -26,7 +26,7 @@ $ python setup.py install --user
 $ deepRloopPredict.py --h5 Arabidopsis_thaliana.hdf5 --fasta your_genome.fasta --prefix test
 ```
 ### Training your own model step by step
-1. Format your training data
+#### 1. Format your training data
 Getting the input file `test_drip.bdg`
 ```
 $ bamCoverage -v -p 30 -b test_fwd.bam -o test_drip.bdg --binSize 1 --effectiveGenomeSize 2131846805 --normalizeUsing RPGC --outFileFormat bedgraph
