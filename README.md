@@ -9,7 +9,7 @@ deepRloopPre contains the following files:
 - `deepRloopPredict.py` (main executable script for predicting R-loop)
 - `deepRloopData.py` (main executable script for getting your own training set)
 - `deepRloopTrain.py` (main executable script for training your own model)
-- `deepRloopEval.py` (main executable script for evaluating models)
+- `deepRloopEval.py` (main executable script for evaluating model)
 
 In addition, we also provide a online [tool](http://bioinfor.kib.ac.cn/R-loopAtlas/deepRloopPre/), but only one sequence of 128kb can be predicted at a time.
 ## Installation
@@ -65,7 +65,7 @@ $ deepRloopEval.py getvalue --truepeak observed_peaks.bed --predpeak test_final_
 $ deepRloopEval.py plotpr --truepeak observed_peaks.bed --predpeak test_all_predict.bed --prefix test
 ```
 ## Prediction  
-The trained model is in the model folder.There are three training sets of models that can be selected for prediction.
+You can download the trained model [here](http://bioinfor.kib.ac.cn/R-loopAtlas/deepRloopPre/downloads.php).
 ```
 $ deepRloopPredict.py -h
 usage: $ deepRloopPredict.py --h5 model.hdf5 --fasta genome.fasta --prefix test
