@@ -23,7 +23,7 @@ $ conda env export -n deepRloopPre --file ml.yaml
 ```
 Install deepRloopPre:
 ```
-$ git clone git@github.com:PEHGP/deepRloopPre.git
+$ git clone https://github.com/PEHGP/deepRloopPre
 $ python setup.py install --user
 ```
 ## Quick start
