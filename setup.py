@@ -21,7 +21,7 @@ setup(
 		"biopython >=1.78",
 		"matplotlib==3.2.2",
 		"tensorflow==2.4.1",
-		"sklearn>=0.23.2",
+		"scikit-learn>=0.23.2",
 
 	],
 	zip_safe=True,
