@@ -24,5 +24,5 @@ setup(
 		"scikit-learn>=0.23.2",
 
 	],
-	zip_safe=True,
+	zip_safe=False,
 )
