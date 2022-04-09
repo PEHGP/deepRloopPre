@@ -23,7 +23,7 @@ $ conda activate deepRloopPre
 $ git clone https://github.com/PEHGP/deepRloopPre
 $ cd deepRloopPre
 $ conda env update -n deepRloopPre -f ml.yaml
-$ python setup.py install --user
+$ python setup.py install
 ```
 ## Quick start
 ### Just prediction
