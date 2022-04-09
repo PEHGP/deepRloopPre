@@ -17,13 +17,10 @@ Create a new environment:
 ```
 $ conda create -n deepRloopPre python=3.7
 ```
-Import configuration:
-```
-$ conda env export -n deepRloopPre --file ml.yaml
-```
 Install deepRloopPre:
 ```
 $ git clone https://github.com/PEHGP/deepRloopPre
+$ conda env update -n deepRloopPre -f ml.yaml
 $ python setup.py install --user
 ```
 ## Quick start
