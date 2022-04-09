@@ -19,6 +19,7 @@ $ conda create -n deepRloopPre python=3.7
 ```
 Install deepRloopPre:
 ```
+$ conda activate deepRloopPre
 $ git clone https://github.com/PEHGP/deepRloopPre
 $ cd deepRloopPre
 $ conda env update -n deepRloopPre -f ml.yaml
