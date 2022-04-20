@@ -37,7 +37,8 @@ def target_entropy_mse(pwm,target_bits): #seqprop_optimizer.py
 def my_loss_fn(y_true, y_pred):
 	#loss=keras.losses.poisson(y_true[:,y_mask_start:y_mask_end,:], y_pred[:,y_mask_start:y_mask_end,:])
 	mse=keras.losses.MeanSquaredError()
-	loss=mse(y_true[:,y_mask_start:y_mask_end,:], y_pred[:,y_mask_start:y_mask_end,:])
+	#loss=mse(y_true[:,y_mask_start:y_mask_end,:], y_pred[:,y_mask_start:y_mask_end,:])
+	loss=mse(y_true[:,:,:], y_pred[:,:,:])
 	return tf.reduce_mean(loss) 
 if __name__ == '__main__':
 	h5=sys.argv[1]
