@@ -30,7 +30,7 @@ if __name__ == '__main__':
 	data=np.load(npz)
 	mask=np.expand_dims(data["mask"],axis=0)
 	template=np.expand_dims(data["template"],axis=0)
-	fModel = load_model(h5,custom_objects={'Rsquare':ig.Rsquare,'GenerLayer':generate_net.GenerLayer,'my_loss_fn':generate_net.my_loss_fn})
+	fModel = load_model(h5,custom_objects={'Rsquare':ig.Rsquare,'GenerLayer':generate_net.GenerLayer,'my_loss_fn':generate_net_v2.my_loss_fn})
 	gModel=Model(inputs=fModel.input,outputs=fModel.get_layer("gener_layer").output)
 	pwm=gModel.predict([mask,template])
 	seq,score=ont_hot_to_seq(pwm[0])
@@ -58,6 +58,12 @@ if __name__ == '__main__':
 	Fr.close()
 	Fr=open(prefix+"_targetseq_realRlooplevel.bdg","w") #target目标序列的真实R-loop水平
 	for i,s in enumerate(data["y_real"]):
+		st=i*scale_win
+		ed=st+scale_win
+		Fr.write(prefix+"\t"+str(st)+"\t"+str(ed)+"\t"+str(s)+"\n")
+	Fr.close()
+	Fr=open(prefix+"_targetseq_predRlooplevel.bdg","w") #target目标序列使用模型预测的R-loop水平
+	for i,s in enumerate(data["y_pred"]):
 		st=i*scale_win
 		ed=st+scale_win
 		Fr.write(prefix+"\t"+str(st)+"\t"+str(ed)+"\t"+str(s)+"\n")
