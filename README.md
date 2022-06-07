@@ -144,8 +144,8 @@ $ macs2 bdgcmp -t test_fwd_treat_pileup.bdg -c test_fwd_control_lambda.bdg -m qp
 ```
 `-g` means genome size and needs to be set to your own.  
 `-f` means format of tag file and needs to be set to your own. If it is BAM for paired-end reads, **BAMPE** is used.  
-Prefix is set to test and the `deepRloopData.py` output as follows:
-- `test.npz`
+  
+Prefix is set to test and the `deepRloopData.py` output is `test.npz`.
 ### 2. Training your model
 ```
 $ deepRloopTrain.py -h
