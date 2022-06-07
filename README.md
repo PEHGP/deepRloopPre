@@ -33,12 +33,12 @@ $ deepRloopPredict.py --h5 Arabidopsis_thaliana.hdf5 --fasta your_genome.fasta -
 You can download the trained model [here](http://bioinfor.kib.ac.cn/R-loopAtlas/l2/deep_downloads.html).
 ### Training your own model step by step
 #### 1. Format your training data
-Getting the `deepRloopData.py` input file `test_drip.bdg`.
+Getting the `deepRloopData.py` input file `test_drip.bdg`.  
 `--effectiveGenomeSize` parameter needs to be set to your own.
 ```
 $ bamCoverage -v -p 30 -b test_fwd.bam -o test_drip.bdg --binSize 1 --effectiveGenomeSize 2131846805 --normalizeUsing RPGC --outFileFormat bedgraph
 ```
-Getting the `deepRloopData.py` input file `test_qpois.bdg`.
+Getting the `deepRloopData.py` input file `test_qpois.bdg`.  
 `-g` parameter needs to be set to your own.
 ```
 $ macs2 callpeak -f BAMPE --trackline -B -t test_fwd.bam -g 2131846805 -n test_fwd --keep-dup all
