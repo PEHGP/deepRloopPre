@@ -30,18 +30,21 @@ $ python setup.py install
 ```
 $ deepRloopPredict.py --h5 Arabidopsis_thaliana.hdf5 --fasta your_genome.fasta --prefix test
 ```
+You can download the trained model [here](http://bioinfor.kib.ac.cn/R-loopAtlas/l2/deep_downloads.html).
 ### Training your own model step by step
 #### 1. Format your training data
-Getting the input file `test_drip.bdg`
+Getting the `deepRloopData.py` input file `test_drip.bdg`.
+`--effectiveGenomeSize` parameter needs to be set to your own.
 ```
 $ bamCoverage -v -p 30 -b test_fwd.bam -o test_drip.bdg --binSize 1 --effectiveGenomeSize 2131846805 --normalizeUsing RPGC --outFileFormat bedgraph
 ```
-Getting the input file `test_qpois.bdg`
+Getting the `deepRloopData.py` input file `test_qpois.bdg`.
+`-g` parameter needs to be set to your own.
 ```
 $ macs2 callpeak -f BAMPE --trackline -B -t test_fwd.bam -g 2131846805 -n test_fwd --keep-dup all
 $ macs2 bdgcmp -t test_fwd_treat_pileup.bdg -c test_fwd_control_lambda.bdg -m qpois --o-prefix test
 ```
-Getting the training data
+Getting the training data.
 ```
 $ deepRloopData.py --fasta genome.fasta --drip test_drip.bdg --qpois test_qpois.bdg --prefix test
 ```
@@ -50,11 +53,11 @@ $ deepRloopData.py --fasta genome.fasta --drip test_drip.bdg --qpois test_qpois.
 $ deepRloopTrain.py --npz dataset.npz --prefix test
 ```
 #### 3. Using your model
-Getting `test_final_predict.bed` and `test_predict.bw`
+Getting output file `test_final_predict.bed` and `test_predict.bw`.
 ```
 $ deepRloopPredict.py --h5 your_model.hdf5 --fasta your_genome.fasta --prefix test
 ```
-Getting `test_all_predict.bed`
+Getting classification score file `test_all_predict.bed` on the whole genome.
 ```
 $ deepRloopPredict.py --h5 your_model.hdf5 --fasta your_genome.fasta --threshold 0 --prefix test_all
 ```
@@ -64,7 +67,6 @@ $ deepRloopEval.py getvalue --truepeak observed_peaks.bed --predpeak test_final_
 $ deepRloopEval.py plotpr --truepeak observed_peaks.bed --predpeak test_all_predict.bed --prefix test
 ```
 ## Prediction  
-You can download the trained model [here](http://bioinfor.kib.ac.cn/R-loopAtlas/deepRloopPre/downloads.php).
 ```
 $ deepRloopPredict.py -h
 usage: $ deepRloopPredict.py --h5 model.hdf5 --fasta genome.fasta --prefix test
@@ -161,7 +163,7 @@ Optional arguments:
   --bs BATCHSIZE   batch size (default: 20)
   --version        show program's version number and exit
 ```
-The input `dataset.npz` can be obtained from `deepRloopData.py`  
+The input `dataset.npz` can be obtained from `deepRloopData.py`.  
 The output is a series of files in hdf5 format, among which the newly generated hdf5 file is the final trained model.  
 ### 3. Evaluation your model
 ```
