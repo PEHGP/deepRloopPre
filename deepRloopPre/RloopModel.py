@@ -36,7 +36,7 @@ def Predict(ModelIn,Win,Genome,ChromeSize,Strand,Prefix,Threshold,Scale,Mem="hig
 			WinSeq=ChromSeq[int(l[1]):int(l[2])]
 			Ss=RloopDeal.GetOnehotSeq(WinSeq,Win,Strand)
 			if Mem=="low":
-				r=ModelIn([Ss],training=False)
+				r=ModelIn(np.array([Ss]),training=False)
 				GetResults(r,FrR,FrC,Strand,[x],Scale)
 			else:
 				Xpredict.append(Ss)
