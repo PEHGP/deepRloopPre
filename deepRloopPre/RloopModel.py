@@ -72,8 +72,8 @@ def GetResults(Output,FrR,FrC,Strand,WindList,Scale):
 			end=i+Scale
 			if end>int(l[2]):
 				end=int(l[2])
-			fm_r=l[0]+"\t"+str(start)+"\t"+str(end)+"\t"+str(lr[t])
-			fm_c=l[0]+"\t"+str(start)+"\t"+str(end)+"\t.\t"+str(lc[t])+"\t"+st
+			fm_r=l[0]+"\t"+str(start)+"\t"+str(end)+"\t"+str(np.array(lr[t]))
+			fm_c=l[0]+"\t"+str(start)+"\t"+str(end)+"\t.\t"+str(np.array(lc[t]))+"\t"+st
 			FrR.write(fm_r+"\n")
 			FrC.write(fm_c+"\n")
 			t+=1
