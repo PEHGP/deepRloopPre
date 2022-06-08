@@ -55,13 +55,8 @@ $ deepRloopData.py --fasta genome.fasta --drip test_drip.bdg --qpois test_qpois.
 $ deepRloopTrain.py --npz dataset.npz --prefix test
 ```
 #### 3. Using your model
-Getting output file `test_final_predict.bed` and `test_predict.bw`.
 ```
 $ deepRloopPredict.py --h5 your_model.hdf5 --fasta your_genome.fasta --prefix test
-```
-Getting classification score file `test_all_predict.bed` on the whole genome.
-```
-$ deepRloopPredict.py --h5 your_model.hdf5 --fasta your_genome.fasta --threshold 0 --prefix test_all
 ```
 #### 4. Evaluation your model
 ```
@@ -132,14 +127,16 @@ Optional arguments:
                         provided, 20% of the data in the training set will be randomly selected as the validation set. (default: None)
   --version             show program's version number and exit
 ```
-The input `test_drip.bdg` can be obtained from BAM file:
+The deepRloopData.py input `test_drip.bdg` can be obtained from BAM file:
 ```
 $ bamCoverage -v -p 30 -b test_fwd.bam -o test_drip.bdg --binSize 1 --effectiveGenomeSize 2131846805 --normalizeUsing RPGC --outFileFormat bedgraph
 ```
 `--effectiveGenomeSize` parameter needs to be set to your own.  
+  
 `test_fwd.bam` BAM needs to be obtained by aligning raw data to the genome. If you use ssDRIP-seq, you can refer to this [wiki](https://github.com/PEHGP/ssDripPipeline/wiki).  
 Of course, you can also generate `test_drip.bdg` based on the [bedGraph](http://genome.ucsc.edu/goldenPath/help/bedgraph.html) format by yourself.  
-The input `test_qpois.bdg` can be obtained as follows:
+  
+The deepRloopData.py input `test_qpois.bdg` can be obtained as follows:
 ```
 $ macs2 callpeak -f BAMPE --trackline -B -t test_fwd.bam -g 2131846805 -n test_fwd --keep-dup all
 $ macs2 bdgcmp -t test_fwd_treat_pileup.bdg -c test_fwd_control_lambda.bdg -m qpois --o-prefix test
