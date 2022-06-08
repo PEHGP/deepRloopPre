@@ -133,7 +133,9 @@ $ bamCoverage -v -p 30 -b test_fwd.bam -o test_drip.bdg --binSize 1 --effectiveG
 ```
 `--effectiveGenomeSize` parameter needs to be set to your own.  
   
-`test_fwd.bam` BAM needs to be obtained by aligning raw data to the genome. If you use ssDRIP-seq, you can refer to this [wiki](https://github.com/PEHGP/ssDripPipeline/wiki).  
+`test_fwd.bam` BAM needs to be obtained by aligning raw data to the genome.  
+If you use ssDRIP-seq, you can refer to this [wiki](https://github.com/PEHGP/ssDripPipeline/wiki).  
+  
 Of course, you can also generate `test_drip.bdg` based on the [bedGraph](http://genome.ucsc.edu/goldenPath/help/bedgraph.html) format by yourself.  
   
 The deepRloopData.py input `test_qpois.bdg` can be obtained as follows:
@@ -187,7 +189,8 @@ example usage:
         deepRloopEval.py getvalue --truepeak observed_peaks.bed --predpeak predicted_peaks.bed --prefix test
         deepRloopEval.py plotpr --truepeak observed_peaks.bed --predpeak predicted_all.bed --prefix test
 ```
-The `observed_peaks.bed` is the R-loop location file obtained by ssDRIP-seq, or the true R-loop location file prepared by yourself. The `predicted_peaks.bed` is the predicted R-loop locations.  
+The `observed_peaks.bed` is the R-loop location file obtained by ssDRIP-seq, or the true R-loop location file prepared by yourself.  
+The `predicted_peaks.bed` is the predicted R-loop locations.  
 `getvalue` subcommand can calculate the spearman of the R-loop profiles, and you need to use `--truebw` and `--predbw`.
 ## Third-party software
 - [BEDTools](https://bedtools.readthedocs.io/en/latest/index.html)
