@@ -161,6 +161,7 @@ Optional arguments:
   --help, -h       show this help message and exit
   --epoch EPOCH    Epoch (default: 1000)
   --bs BATCHSIZE   batch size (default: 20)
+  --h5 H5          regression h5 model for transfer training of classification (default: None)
   --version        show program's version number and exit
 ```
 The input `dataset.npz` can be obtained from `deepRloopData.py`.  
@@ -174,6 +175,9 @@ Evaluation of prediction results.This program can output F1-score, Precision, Re
 A detailed sub-commands help is available by typing:
         deepRloopEval.py getvalue -h
         deepRloopEval.py plotpr -h
+	deepRloopEval.py plotpeak -h
+	deepRloopEval.py plotgene -h
+	deepRloopEval.py plotcorr -h
 
 optional arguments:
   -h, --help  show this help message and exit
@@ -181,12 +185,18 @@ optional arguments:
 
 commands:
   
-    getvalue  getting the F1-score, Precision, Recall, Spearman.
-    plotpr    plot precision-recall curve.
+    getvalue  getting the F1-score, Precision, Recall, Jaccard, AP, Spearman.
+    plotpr    plot precision-recall curve for many samples.
+    plotpeak  plot R-loop peak region metaplot.
+    plotgene  plot sense/antisense metaplot or region metaplot.
+    plotcorr  plot observed and predicted sense/antisense correlation.
 
 example usage:
         deepRloopEval.py getvalue --truepeak observed_peaks.bed --predpeak predicted_peaks.bed --prefix test
-        deepRloopEval.py plotpr --truepeak observed_peaks.bed --predpeak predicted_all.bed --prefix test
+        deepRloopEval.py plotpr --target target --prefix test
+	deepRloopEval.py plotpeak --truepeak observed_peaks.bed --predpeak predicted_all.bed --truebw true.bw --predbw pred.bw --prefix test
+	deepRloopEval.py plotgene --genebed gene.bed --truefwdbw truefwd.bw --truerevbw truerev.bw --predfwdbw predfwd.bw --predrevbw predrev.bw --prefix test
+	deepRloopEval.py plotcorr --genebed gene.bed --truefwdbw truefwd.bw --truerevbw truerev.bw --predfwdbw predfwd.bw --predrevbw predrev.bw --genebody --tssextend 300 --ttsextend 300 --prefix test
 ```
 The `observed_peaks.bed` is true R-loop locations.  
 The `predicted_peaks.bed` is predicted R-loop locations.  
