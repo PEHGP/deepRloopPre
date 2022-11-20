@@ -19,6 +19,7 @@ def GetOptionalArgs():
 	optional.add_argument("--help", "-h", action="help",help="show this help message and exit")
 	optional.add_argument('--epoch',dest="Epoch",default=1000,help="Epoch",type=int)
 	optional.add_argument("--bs",dest="BatchSize",default=20,help="batch size",type=int)
+	optional.add_argument("--h5",dest="H5",default=None,help="regression h5 model for transfer training of classification")
 	optional.add_argument('--version', action='version',version='deepRloopPre {}'.format(__version__))
 	return parser
 if __name__ == '__main__':
@@ -27,5 +28,6 @@ if __name__ == '__main__':
 	Prefix=args.Prefix
 	Epoch=int(args.Epoch)
 	BatchSize=int(args.BatchSize)
+	H5=args.H5
 	from deepRloopPre import RloopModel
-	RloopModel.Train(Data,Prefix,Epoch,BatchSize)
+	RloopModel.Train(Data,Prefix,Epoch,BatchSize,H5)

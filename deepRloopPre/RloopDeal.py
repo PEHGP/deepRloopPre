@@ -9,6 +9,8 @@ import scipy,gc,random
 from Bio import SeqIO
 from Bio.Seq import Seq
 import matplotlib.pyplot as plt
+from sklearn.metrics import r2_score
+from sklearn import datasets, linear_model
 def GetOnehot():
 	Onehot={"A":[1,0,0,0],"T":[0,1,0,0],"C":[0,0,1,0],"G":[0,0,0,1],"N":[0,0,0,0]}
 	return Onehot
@@ -153,7 +155,7 @@ def OverlapEval(TruePeak,PredictPeak):
 	F1=2*Precision*Recall/(Precision+Recall)
 	return F1,Precision,Recall
 def AbundanceEval(TrueBw,PredictBw,Prefix):
-	os.system("multiBigwigSummary bins -p 30 -bs 128 -b %s %s -o %s_results.npz --outRawCounts %s_results.xls"%(TrueBw,PredictBw,Prefix,Prefix))
+	os.system("multiBigwigSummary bins -p 30 -bs 128 -b %s %s -o %s_results.npz --outRawCounts %s_results.xls"%(TrueBw,PredictBw,Prefix,Prefix)) #128 need as a parameter
 	os.system("plotCorrelation -in %s_results.npz --corMethod spearman --skipZeros --whatToPlot scatterplot -o %s_spearman.png --outFileCorMatrix %s_spearman.tab"%(Prefix,Prefix,Prefix))
 	df=pandas.read_csv("%s_spearman.tab"%Prefix,sep="\t",header=0,index_col=0,comment="#")
 	Spearman=df.iloc[0,1]
@@ -221,50 +223,172 @@ def PlotPr(precisiond,recalld,APd,colord,sample_list,prefix):
 	fig.savefig("%s_pr.svg"%prefix,format='svg')
 	fig.clf()
 	plt.close(fig)
-def Evaluation(Prefix,TruePeak=None,PredictPeak=None,TrueBw=None,PredictBw=None):
-	Fr=open(Prefix+".xls","w")
-	if TruePeak and PredictPeak:
-		Fr.write("Method\tF1\tPrecision\tRecall\tJaccard\n")
-		F1,Precision,Recall,Jaccard=OnebaseEval(TruePeak,PredictPeak)
-		Fr.write("onebase\t"+str(F1)+"\t"+str(Precision)+"\t"+str(Recall)+"\t"+str(Jaccard)+"\n")
-		F1,Precision,Recall=OverlapEval(TruePeak,PredictPeak)
-		Fr.write("overlap\t"+str(F1)+"\t"+str(Precision)+"\t"+str(Recall)+"\t-\n")
-	if TrueBw and PredictBw:
-		Spearman=AbundanceEval(TrueBw,PredictBw,Prefix)
+def Evaluation(Prefix,HaveScale=True,PredAllBed=None,ChromeSize=None,TruePeak=None,PredPeak=None,TrueBw=None,PredBw=None):
+	Fr=open(Prefix+"_eval.xls","w")
+	if TruePeak and PredPeak:
+		if PredAllBed:
+			if not ChromeSize:
+				print("ChromSize is not provided.")
+				AP="-"
+			else:
+				Scale=128 #as parameter?
+				a,b,c,AP=GetPr(TruePeak,PredAllBed,ChromeSize,Scale,HaveScale)
+		else:
+			AP="-"
+		Fr.write("Method\tF1\tPrecision\tRecall\tJaccard\tAP\n")
+		F1,Precision,Recall,Jaccard=OnebaseEval(TruePeak,PredPeak)
+		Fr.write("onebase\t"+str(F1)+"\t"+str(Precision)+"\t"+str(Recall)+"\t"+str(Jaccard)+"\t-"+"\n")
+		F1,Precision,Recall=OverlapEval(TruePeak,PredPeak)
+		Fr.write("overlap\t"+str(F1)+"\t"+str(Precision)+"\t"+str(Recall)+"\t-\t"+str(AP)+"\n")
+	if TrueBw and PredBw:
+		Spearman=AbundanceEval(TrueBw,PredBw,Prefix)
 		Fr.write("\n\nspearman:%s\n"%Spearman)
 	Fr.close()
-def PlotPrList(TruePeak,ChromeSize,Scale,Prefix,HaveScale=True,PredictAllBed=None,Target=None):
-	precisiond={}
-	recalld={}
+def PlotPrList(Scale,Prefix,Target): #HaveScale=True PredictAllBed=None
+	Precisiond={}
+	Recalld={}
 	APd={}
-	colord={}
+	Colord={}
 	Fr=open(Prefix+"_pr.xls","w")
-	sample_list=[]
-	if Target:
-		for x in open(Target): #name\tpredict_all.bed\thave_scaled(0/1)\tcolor
-			x=x.rstrip()
-			l=x.split("\t")
-			name=l[0]
-			predict_bed=l[1]
-			have_scaled=bool(int(l[2]))
-			sample_list.append(name)
-			colord[name]=l[-1]
-			precision,recall,thresholds,AP=GetPr(TruePeak,predict_bed,ChromeSize,Scale,have_scaled)
-			precisiond[name]=precision.tolist()
-			recalld[name]=recall.tolist()
-			APd[name]=AP
-			for pi,ri,ti in zip(precision,recall,thresholds):
-				Fr.write(name+"\t"+str(pi)+"\t"+str(ri)+"\t"+str(ti)+"\n")
-		Fr.close()
-		PlotPr(precisiond,recalld,APd,colord,sample_list,Prefix)
-	elif PredictAllBed:
-		precision,recall,thresholds,AP=GetPr(TruePeak,PredictAllBed,ChromeSize,Scale,HaveScale)
-		precisiond[Prefix]=precision.tolist()
-		recalld[Prefix]=recall.tolist()
-		APd[Prefix]=AP
-		sample_list.append(Prefix)
-		colord[Prefix]="#C00000"
-		for pi,ri,ti in zip(precision,recall,thresholds):
-			Fr.write(Prefix+"\t"+str(pi)+"\t"+str(ri)+"\t"+str(ti)+"\n")
-		Fr.close()
-		PlotPr(precisiond,recalld,APd,colord,sample_list,Prefix)
+	SampleList=[]
+	for x in open(Target): #Name\tture_peak.bed\tpredict_all.bed\tHaveScale(0/1)\tChromeSize\tcolor
+		x=x.rstrip()
+		l=x.split("\t")
+		Name=l[0]
+		TruePeak=l[1]
+		PredictBed=l[2]
+		HaveScale=bool(int(l[3]))
+		ChromeSize=l[4]
+		SampleList.append(Name)
+		Colord[Name]=l[-1]
+		Precision,Recall,Thresholds,AP=GetPr(TruePeak,PredictBed,ChromeSize,Scale,HaveScale)
+		Precisiond[Name]=Precision.tolist()
+		Recalld[Name]=Recall.tolist()
+		APd[Name]=AP
+		for pi,ri,ti in zip(Precision,Recall,Thresholds):
+			Fr.write(Name+"\t"+str(pi)+"\t"+str(ri)+"\t"+str(ti)+"\n")
+	Fr.close()
+	PlotPr(Precisiond,Recalld,APd,Colord,SampleList,Prefix)
+	#elif PredictAllBed:
+	#	precision,recall,thresholds,AP=GetPr(TruePeak,PredictAllBed,ChromeSize,Scale,HaveScale)
+	#	precisiond[Prefix]=precision.tolist()
+	#	recalld[Prefix]=recall.tolist()
+	#	APd[Prefix]=AP
+	#	sample_list.append(Prefix)
+	#	colord[Prefix]="#C00000"
+	#	for pi,ri,ti in zip(precision,recall,thresholds):
+	#		Fr.write(Prefix+"\t"+str(pi)+"\t"+str(ri)+"\t"+str(ti)+"\n")
+	#	Fr.close()
+	#	PlotPr(precisiond,recalld,APd,colord,sample_list,Prefix)
+def PlotDist(Prefix,TruePeak,PredPeak,TrueBw,PredBw,Extend=1000,Thread=12):
+	os.system("bedtools intersect -nonamecheck -wa -a %s -b %s|sort -u|bedtools sort -i - >%s_overlap_predict.bed"%(PredPeak,TruePeak,Prefix))
+	os.system("bedtools intersect -nonamecheck -wa -a %s -b %s|sort -u|bedtools sort -i - >%s_overlap_true.bed"%(TruePeak,PredPeak,Prefix))
+	os.system("bedtools intersect -nonamecheck -v -a %s -b %s|sort -u|bedtools sort -i - >%s_nooverlap_predict.bed"%(PredPeak,TruePeak,Prefix))
+	os.system("bedtools intersect -nonamecheck -v -a %s -b %s|sort -u|bedtools sort -i - >%s_nooverlap_true.bed"%(TruePeak,PredPeak,Prefix))
+	os.system("computeMatrix scale-regions --missingDataAsZero -S %s -R %s_overlap_predict.bed %s_nooverlap_predict.bed %s_overlap_true.bed %s_nooverlap_true.bed -o %s_true_matrix.gz --startLabel start --endLabel end -b %s -a %s -m %s -p %s"%(TrueBw,Prefix,Prefix,Prefix,Prefix,Prefix,Extend,Extend,Extend,Thread))
+	os.system("computeMatrix scale-regions --missingDataAsZero -S %s -R %s_overlap_predict.bed %s_nooverlap_predict.bed %s_overlap_true.bed %s_nooverlap_true.bed -o %s_predict_matrix.gz --startLabel start --endLabel end -b %s -a %s -m %s -p %s"%(PredBw,Prefix,Prefix,Prefix,Prefix,Prefix,Extend,Extend,Extend,Thread))
+	os.system("plotHeatmap -m %s_true_matrix.gz -o %s_true_metaplot.svg --outFileNameMatrix %s_true_matrix.gz --startLabel start --endLabel end --perGroup -y 'R-loop level' --dpi 300 --samplesLabel 'R-loop level' --regionsLabel OverP NoverP OverT NoverT --colorMap RdBu_r --plotFileFormat svg --legendLocation none "%(Prefix,Prefix,Prefix))
+	os.system("plotHeatmap -m %s_predict_matrix.gz -o %s_predict_metaplot.svg --outFileNameMatrix %s_predict_matrix.gz --startLabel start --endLabel end --perGroup -y 'R-loop level' --dpi 300 --samplesLabel 'R-loop level' --regionsLabel OverP NoverP OverT NoverT --colorMap RdBu_r --plotFileFormat svg --legendLocation none"%(Prefix,Prefix,Prefix))
+def PlotGeneDist(Prefix,GeneBed,TrueFwdBw,TrueRevBw,PredFwdBw,PredRevBw,Extend=1000,Thread=12):
+	sl=os.popen("awk -F'\t' '{print $6}' %s|sort -u"%(GeneBed)).readlines()
+	d={}
+	d["true"]={"fwd":TrueFwdBw,"rev":TrueRevBw}
+	d["pred"]={"fwd":PredFwdBw,"rev":PredRevBw}
+	if len(sl)==2:
+		sl=[s.rstrip() for s in sl]
+		if "+" in sl and "-" in sl:
+			os.system("grep '+' %s >%s_positive.bed"%(GeneBed,Prefix))
+			os.system("grep '\\-' %s >%s_negative.bed"%(GeneBed,Prefix))
+			for p in d:
+				for dr in ["fwd","rev"]:
+					for zf in ["positive","negative"]:
+						os.system("computeMatrix scale-regions -p %s --missingDataAsZero -S %s -R %s_%s.bed -bs 5 -b %s -a %s -m %s --skipZeros -o %s_%s_%s_%s.gz"%(Thread,d[p][dr],Prefix,zf,Extend,Extend,Extend,Prefix,p,zf,dr))
+				os.system("computeMatrixOperations rbind -m %s_%s_positive_rev.gz %s_%s_negative_fwd.gz -o %s_%s_antisense.gz"%(Prefix,p,Prefix,p,Prefix,p))
+				os.system("computeMatrixOperations relabel -m %s_%s_antisense.gz -o %s_%s_antisense_deal.gz --sampleLabels \"R-loop level\" --groupLabels \"%s_antisense\""%(Prefix,p,Prefix,p,p))
+				os.system("computeMatrixOperations rbind -m %s_%s_negative_rev.gz %s_%s_positive_fwd.gz -o %s_%s_sense.gz"%(Prefix,p,Prefix,p,Prefix,p))
+				os.system("computeMatrixOperations relabel -m %s_%s_sense.gz -o %s_%s_sense_deal.gz --sampleLabels \"R-loop level\" --groupLabels \"%s_sense\""%(Prefix,p,Prefix,p,p))
+			os.system("computeMatrixOperations rbind -m %s_true_sense_deal.gz %s_true_antisense_deal.gz %s_pred_sense_deal.gz %s_pred_antisense_deal.gz -o %s_deal.gz"%(Prefix,Prefix,Prefix,Prefix,Prefix))
+			os.system("plotHeatmap -m %s_deal.gz -o %s_sense_antisense_metaplot.svg --perGroup -y 'R-loop level' --dpi 300 --samplesLabel 'R-loop level' --regionsLabel TrueSense TrueAntisense PredictSense PredictAntisense --colorMap RdBu_r --legendLocation none --yMin 0 --startLabel TSS --endLabel TTS"%(Prefix,Prefix))
+		else:
+			print(sl)
+			print("strand do not include + or -.")
+	else:
+		for p in d:
+			for dr in ["fwd","rev"]:
+				os.system("computeMatrix scale-regions -p %s --missingDataAsZero -S %s -R %s -bs 5 -b %s -a %s -m %s --skipZeros -o %s_%s_%s_matrix.gz"%(Thread,d[p][dr],GeneBed,Extend,Extend,Extend,Prefix,p,dr))
+			os.system("computeMatrixOperations rbind -m %s_%s_fwd_matrix.gz %s_%s_rev_matrix.gz -o %s_%s_matrix.gz"%(Prefix,p,Prefix,p,Prefix,p))
+			os.system("computeMatrixOperations relabel -m %s_%s_matrix.gz -o %s_%s_matrix_deal.gz --sampleLabels \"R-loop level\" --groupLabels \"%s\""%(Prefix,p,Prefix,p,p))
+		os.system("computeMatrixOperations rbind -m %s_true_matrix_deal.gz %s_pred_matrix_deal.gz -o %s_deal.gz"%(Prefix,Prefix,Prefix))
+		os.system("plotHeatmap -m %s_deal.gz -o %s_metaplot.svg --perGroup -y 'R-loop level' --dpi 300 --samplesLabel 'R-loop level' --regionsLabel True Predict --colorMap RdBu_r --legendLocation none --yMin 0 --startLabel TSS --endLabel TTS"%(Prefix,Prefix))
+def GetSenseAntisenseCounts(BedFile,TrueFwdBw,PredFwdBw,TrueRevBw,PredRevBw,Thread,Prefix):
+	Sense=pandas.DataFrame()
+	Antisense=pandas.DataFrame()
+	DfBed=pandas.read_table(BedFile,sep="\t",header=None,index_col=[0,1,2],names=["chr","start","end","gene","score","strand"])
+	for s in ["fwd","rev"]:
+		if s=="fwd":
+			TrueBwFile=TrueFwdBw
+			PredBwFile=PredFwdBw
+		elif s=="rev":
+			TrueBwFile=TrueRevBw
+			PredBwFile=PredRevBw
+		cmd="multiBigwigSummary BED-file --BED %s -p %s --bwfiles %s %s --label observation prediction --outRawCounts %s_%s_counts.xls -o %s_%s.npz"%(BedFile,Thread,TrueBwFile,PredBwFile,Prefix,s,Prefix,s)
+		os.system(cmd)
+		os.system("sed \"1s/[#|']//g\" %s_%s_counts.xls >%s_%s_counts_deal.xls"%(Prefix,s,Prefix,s))
+		Df=pandas.read_table("%s_%s_counts_deal.xls"%(Prefix,s),sep="\t",header=0,index_col=[0,1,2])
+		DfUni=Df[~Df.index.duplicated(keep=False)]
+		DfBedUni=DfBed[~DfBed.index.duplicated(keep=False)]
+		#df_con=pandas.concat([df_uni,df_bed_uni],axis=1)
+		print(Df.shape)
+		print(DfUni.shape)
+		print(DfBed.shape)
+		print(DfBedUni.shape)
+		DfR=pandas.concat([DfUni,DfBedUni],axis=1)
+		print(DfR)
+		labels=["gene"]+list(Df.columns)
+		if s=="fwd":
+			Sense=Sense.append(DfR[DfR["strand"]=="+"].loc[:,labels],ignore_index=True)
+			Antisense=Antisense.append(DfR[DfR["strand"]=="-"].loc[:,labels],ignore_index=True)
+		elif s=="rev":
+			Sense=Sense.append(DfR[DfR["strand"]=="-"].loc[:,labels],ignore_index=True)
+			Antisense=Antisense.append(DfR[DfR["strand"]=="+"].loc[:,labels],ignore_index=True)
+	Sense.to_csv("%s_sense_counts.xls"%Prefix,sep="\t",index=False)
+	Antisense.to_csv("%s_antisense_counts.xls"%Prefix,sep="\t",index=False)
+	TrueX=np.log2(Sense["observation"]+1)
+	PredictY=np.log2(Sense["prediction"]+1)
+	PlotCorr(TrueX,PredictY,Prefix+"_sense")
+	TrueX=np.log2(Antisense["observation"]+1)
+	PredictY=np.log2(Antisense["prediction"]+1)
+	PlotCorr(TrueX,PredictY,Prefix+"_antisense")
+	#return Sense,Antisense
+def PlotRloopCorr(Prefix,GeneBed,TrueFwdBw,PredFwdBw,TrueRevBw,PredRevBw,ChromSize,GeneBody=None,TssExtend=None,TtsExtend=None,Thread=12):
+	if GeneBody:
+		GetSenseAntisenseCounts(GeneBed,TrueFwdBw,PredFwdBw,TrueRevBw,PredRevBw,Thread,Prefix+"_genebody")
+	if TssExtend:
+		os.system("awk -F\'\t\' \'{if($6==\"+\"){print $1\"\t\"$2\"\t\"$2\"\t\"$4\"\t\"$5\"\t\"$6}else{print $1\"\t\"$3\"\t\"$3\"\t\"$4\"\t\"$5\"\t\"$6} }' %s|bedtools slop -i - -g %s -b %s >%s_tss_%s.bed"%(GeneBed,ChromSize,TssExtend,Prefix,TssExtend))
+		GetSenseAntisenseCounts("%s_tss_%s.bed"%(Prefix,TssExtend),TrueFwdBw,PredFwdBw,TrueRevBw,PredRevBw,Thread,Prefix+"_tss_"+str(TssExtend))
+	if TtsExtend:
+		os.system("awk -F\'\t\' \'{if($6==\"+\"){print $1\"\t\"$3\"\t\"$3\"\t\"$4\"\t\"$5\"\t\"$6}else{print $1\"\t\"$2\"\t\"$2\"\t\"$4\"\t\"$5\"\t\"$6} }' %s|bedtools slop -i - -g %s -b %s >%s_tts_%s.bed"%(GeneBed,ChromSize,TtsExtend,Prefix,TtsExtend))
+		GetSenseAntisenseCounts("%s_tts_%s.bed"%(Prefix,TtsExtend),TrueFwdBw,PredFwdBw,TrueRevBw,PredRevBw,Thread,Prefix+"_tts_"+str(TtsExtend))
+def PlotCorr(TrueX,PredictY,Name):
+	xr=np.array([[i] for i in TrueX])
+	yr=np.array([[i] for i in PredictY])
+	regr = linear_model.LinearRegression()
+	regr.fit(xr,yr)
+	s=scipy.stats.spearmanr(TrueX,PredictY)
+	plt.rcParams['svg.fonttype'] = 'none'
+	fig = plt.figure(dpi=300)
+	ax = fig.add_subplot(1,1,1)
+	ax.grid(True,linestyle='dotted')
+	bp=ax.scatter(TrueX,PredictY,alpha=0.3,marker=".",linewidths=0)
+	py=np.array([i[0] for i in regr.predict(xr)])
+	ax.plot(TrueX,py,color='red',linewidth=1)
+	xi=max(TrueX)*1/5.
+	yi=max(PredictY)*5/6.
+	ax.text(xi,yi,"Spearman=%.4f"%s[0])
+	ax.set_ylabel("log2(Prediction+1)")
+	ax.set_xlabel("log2(Observation+1)")
+	ax.set_title(Name)
+	fig.savefig("%s_corr.svg"%Name,format="svg")
+	fig.savefig("%s_corr.png"%Name,format="png")
+	fig.clf()
+	plt.close(fig)

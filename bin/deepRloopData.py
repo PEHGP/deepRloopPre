@@ -13,8 +13,8 @@ def GetRequiredArgs():
 	parser = argparse.ArgumentParser(add_help=False)
 	required = parser.add_argument_group('Required arguments')
 	required.add_argument('--fasta',dest="Fasta",required=True,help='FASTA format file, usually a genome FASTA file.')
-	required.add_argument('--drip',dest="Drip",required=True,help='R-loop profiles in bdg format obtained from ssDRIP-seq.')
-	required.add_argument('--qpois',dest="Qpois",required=True,help='-np.log10(qvalue) in bdg format obtained from macs2.')
+	required.add_argument('--drip',dest="Drip",required=True,help='R-loop profiles in sorted bdg format obtained from ssDRIP-seq.')
+	required.add_argument('--qpois',dest="Qpois",required=True,help='-np.log10(qvalue) in sorted bdg format obtained from macs2.')
 	required.add_argument("--prefix",dest="Prefix",required=True)
 	return parser
 def GetOptionalArgs():

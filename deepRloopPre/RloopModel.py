@@ -41,7 +41,7 @@ def Predict(ModelIn,Win,Genome,ChromeSize,Strand,Prefix,Threshold,Scale,Mem="hig
 			else:
 				Xpredict.append(Ss)
 		if Mem!="low":
-			r=ModelIn.predict(Xpredict,batch_size=20,verbose=1)
+			r=ModelIn.predict(Xpredict,batch_size=20,verbose=1) #add batch_size as parameter
 			GetResults(r,FrR,FrC,Strand,Wind[record.id],Scale)
 	FrR.close()
 	FrC.close()
@@ -105,36 +105,41 @@ def CreateModel(Inputs,Transfer=False):
 		else:
 			Model = tf.keras.models.Model(Inputs,RloopRegression)
 	return Model
-def Train(Data,Prefix,Epoch,BatchSize):
+def Generator(Data,BatchSize,DataLabel="Train",TaskLabel="Regression"): #Train or Test,Regression or Classification
+	if DataLabel=="Train":
+		X=Data["X_train"]
+		y_regression=Data["y_rlooptrain_regression"]
+		if TaskLabel=="Classification":
+			y_classification=Data["y_rlooptrain_classification"]
+	elif DataLabel=="Test":
+		X=Data["X_test"]
+		y_regression=Data["y_rlooptest_regression"]
+		if TaskLabel=="Classification":
+			y_classification=Data["y_rlooptest_classification"]
+	y_regression=np.expand_dims(np.array(y_regression),axis=2)
+	if TaskLabel=="Classification":
+		y_classification=np.expand_dims(np.array(y_classification),axis=2)
+	i=0
+	length=X.shape[0]
+	while True:
+		if i>=length:
+			i=0
+		X_i = X[i:i+BatchSize,:,:]
+		y_regression_i = y_regression[i:i+BatchSize,:,:]
+		if TaskLabel=="Classification":
+			y_classification_i=y_classification[i:i+BatchSize,:,:]
+		i=i+BatchSize
+		if TaskLabel=="Regression":
+			yield (X_i,{"rloop_regression":y_regression_i})
+		elif TaskLabel=="Classification":
+			yield (X_i,{"rloop_regression":y_regression_i,"rloop_classification":y_classification_i})
+def ClassTrain(Data,RegressionH5,Epoch,BatchSize,Prefix):
 	timesteps=128000
 	data_dim=4
-	batch_size=BatchSize #20
-	n_epoch=Epoch #1000
-	X_train=Data["X_train"]
-	y_rlooptrain_regression=Data["y_rlooptrain_regression"]
-	y_rlooptrain_classification=Data['y_rlooptrain_classification']
-	X_test=Data['X_test']
-	y_rlooptest_regression=Data['y_rlooptest_regression']
-	y_rlooptest_classification=Data['y_rlooptest_classification']
-	y_rlooptrain_regression=np.expand_dims(np.array(y_rlooptrain_regression),axis=2)
-	y_rlooptrain_classification=np.expand_dims(np.array(y_rlooptrain_classification),axis=2)
-	y_rlooptest_regression=np.expand_dims(np.array(y_rlooptest_regression),axis=2)
-	y_rlooptest_classification=np.expand_dims(np.array(y_rlooptest_classification),axis=2)
 	Inputs=layers.Input(shape=(timesteps,data_dim))
-	ModelRegression=CreateModel(Inputs)
-	ModelRegression.summary()
-	CheckPoint=ModelCheckpoint(filepath="%s_{epoch:02d}_{val_Rsquare:.5f}_regression.hdf5"%Prefix,monitor='val_Rsquare',verbose=1,save_best_only=True,mode='max') #
-	CsvLogger=CSVLogger('%s_regression_training.log'%Prefix,separator='\t')
-	EarlyStop=EarlyStopping(monitor='val_Rsquare',patience=300,mode='max')#monitor need change
-	CallBacks=[CheckPoint,CsvLogger,EarlyStop]
-	ModelRegression.compile(optimizer='Adam',loss={'rloop_regression':'poisson'},metrics={"rloop_regression":Rsquare})
-	ModelRegression.fit(X_train,{"rloop_regression":y_rlooptrain_regression},batch_size=batch_size,epochs=n_epoch,shuffle=True,validation_data=(X_test,y_rlooptest_regression),callbacks=CallBacks)
-	RegressionH5fList=[]
-	for h5f in glob.glob("%s_*_*_regression.hdf5"%Prefix):
-		RegressionH5fList.append((os.path.getctime(h5f),h5f))
-	FinalRegressionH5=sorted(RegressionH5fList)[-1][1]
-	print("Optimal regression model:%s"%FinalRegressionH5)
-	ModelRegression = load_model(FinalRegressionH5,{'Rsquare':Rsquare})
+	ClassTrain=Generator(Data,BatchSize,DataLabel="Train",TaskLabel="Classification")
+	ClassTest=Generator(Data,BatchSize,DataLabel="Test",TaskLabel="Classification")
+	ModelRegression = load_model(RegressionH5,{'Rsquare':Rsquare})
 	ModelClassification=CreateModel(Inputs,Transfer=True)
 	for layer in ModelClassification.layers:
 		#print(layer.name)
@@ -149,9 +154,52 @@ def Train(Data,Prefix,Epoch,BatchSize):
 	EarlyStop=EarlyStopping(monitor='val_rloop_classification_loss',patience=300,mode='min')#monitor need change
 	CallBacks=[CheckPoint,CsvLogger,EarlyStop]
 	ModelClassification.compile(optimizer='Adam',loss={'rloop_regression':'poisson','rloop_classification':'binary_crossentropy'},metrics={"rloop_regression":Rsquare,"rloop_classification":['Precision','Recall']})
-	ModelClassification.fit(X_train,{"rloop_regression":y_rlooptrain_regression,"rloop_classification":y_rlooptrain_classification},batch_size=batch_size,epochs=n_epoch,shuffle=True,validation_data=(X_test,[y_rlooptest_regression,y_rlooptest_classification]),callbacks=CallBacks)
+	#ModelClassification.fit(X_train,{"rloop_regression":y_rlooptrain_regression,"rloop_classification":y_rlooptrain_classification},batch_size=batch_size,epochs=n_epoch,shuffle=True,validation_data=(X_test,[y_rlooptest_regression,y_rlooptest_classification]),callbacks=CallBacks)
+	ModelClassification.fit(ClassTrain,steps_per_epoch=Data["X_train"].shape[0]//BatchSize,epochs=Epoch,validation_data=ClassTest,validation_steps=Data["X_test"].shape[0]//BatchSize,callbacks=CallBacks)
 	ClassificationH5fList=[]
 	for h5f in glob.glob("%s_*_*_classification.hdf5"%Prefix):
 		ClassificationH5fList.append((os.path.getctime(h5f),h5f))
 	FinalClassificationH5=sorted(ClassificationH5fList)[-1][1]
-	print("Optimal classification model:%s"%FinalClassificationH5)
+	return FinalClassificationH5
+def RegressTrain(Data,Epoch,BatchSize,Prefix):
+	timesteps=128000
+	data_dim=4
+	RegreTrain=Generator(Data,BatchSize,DataLabel="Train",TaskLabel="Regression")
+	RegreTest=Generator(Data,BatchSize,DataLabel="Test",TaskLabel="Regression")
+	Inputs=layers.Input(shape=(timesteps,data_dim))
+	ModelRegression=CreateModel(Inputs)
+	ModelRegression.summary()
+	CheckPoint=ModelCheckpoint(filepath="%s_{epoch:02d}_{val_Rsquare:.5f}_regression.hdf5"%Prefix,monitor='val_Rsquare',verbose=1,save_best_only=True,mode='max') #
+	CsvLogger=CSVLogger('%s_regression_training.log'%Prefix,separator='\t')
+	EarlyStop=EarlyStopping(monitor='val_Rsquare',patience=300,mode='max')#monitor need change
+	CallBacks=[CheckPoint,CsvLogger,EarlyStop]
+	ModelRegression.compile(optimizer='Adam',loss={'rloop_regression':'poisson'},metrics={"rloop_regression":Rsquare})
+	#ModelRegression.fit(X_train,{"rloop_regression":y_rlooptrain_regression},batch_size=batch_size,epochs=n_epoch,shuffle=True,validation_data=(X_test,y_rlooptest_regression),callbacks=CallBacks)
+	ModelRegression.fit(RegreTrain,steps_per_epoch=Data["X_train"].shape[0]//BatchSize,epochs=Epoch,validation_data=RegreTest,validation_steps=Data["X_test"].shape[0]//BatchSize,callbacks=CallBacks)
+	RegressionH5fList=[]
+	for h5f in glob.glob("%s_*_*_regression.hdf5"%Prefix):
+		RegressionH5fList.append((os.path.getctime(h5f),h5f))
+	FinalRegressionH5=sorted(RegressionH5fList)[-1][1]
+	del RegreTest,RegreTrain
+	return FinalRegressionH5
+def Train(Data,Prefix,Epoch,BatchSize,RegressionH5=None):
+	#timesteps=128000
+	#data_dim=4
+	#X_train=Data["X_train"]
+	#y_rlooptrain_regression=Data["y_rlooptrain_regression"]
+	#y_rlooptrain_classification=Data['y_rlooptrain_classification']
+	#X_test=Data['X_test']
+	#y_rlooptest_regression=Data['y_rlooptest_regression']
+	#y_rlooptest_classification=Data['y_rlooptest_classification']
+	#y_rlooptrain_regression=np.expand_dims(np.array(y_rlooptrain_regression),axis=2)
+	#y_rlooptrain_classification=np.expand_dims(np.array(y_rlooptrain_classification),axis=2)
+	#y_rlooptest_regression=np.expand_dims(np.array(y_rlooptest_regression),axis=2)
+	#y_rlooptest_classification=np.expand_dims(np.array(y_rlooptest_classification),axis=2)
+	if RegressionH5:
+		FinalClassificationH5=ClassTrain(Data,RegressionH5,Epoch,BatchSize,Prefix)
+		print("Optimal classification model:%s"%FinalClassificationH5)
+	else:
+		FinalRegressionH5=RegressTrain(Data,Epoch,BatchSize,Prefix)
+		print("Optimal regression model:%s"%FinalRegressionH5)
+		FinalClassificationH5=ClassTrain(Data,FinalRegressionH5,Epoch,BatchSize,Prefix)
+		print("Optimal classification model:%s"%FinalClassificationH5)
