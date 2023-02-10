@@ -207,3 +207,4 @@ The `predicted_peaks.bed` is predicted R-loop locations.
 - [bedGraphToBigWig](http://rohsdb.cmb.usc.edu/goldenPath/help/bigWig.html)
 - [MACS2](http://github.com/taoliu/MACS/)
 ## Citing this work
+Li, K., Wu, Z., Zhou, J., Xu, W., Li, L., Liu, C., Li, W., Zhang, C., & Sun, Q. (2022). [R-loopAtlas: An integrated R-loop resource from 254 plant species sustained by a deep-learning-based tool.](https://pubmed.ncbi.nlm.nih.gov/36536599/) Molecular plant, S1674-2052(22)00447-6.
